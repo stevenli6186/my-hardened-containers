@@ -1,12 +1,9 @@
 # Use the latest Amazon Corretto 17 on AL2023 as the base image
 FROM public.ecr.aws/amazoncorretto/amazoncorretto:17-al2023
 
-# Remove existing Python versions (including Python 3.9)
-RUN dnf remove -y python3 python3-libs && \
-    dnf clean all && rm -rf /var/cache/dnf
-
 # Install required dependencies for building Python 3.12.9
-RUN dnf install -y \
+RUN dnf update -y && \
+    dnf install -y \
       gcc gcc-c++ make \
       zlib-devel bzip2 bzip2-devel readline-devel \
       sqlite sqlite-devel openssl-devel \
@@ -18,8 +15,6 @@ RUN dnf install -y \
     cd .. && rm -rf Python-3.12.9 Python-3.12.9.tgz && \
     dnf clean all && rm -rf /var/cache/dnf
 
-# Set Python 3.12.9 as the default and remove any old symlinks
-RUN ln -sf /usr/local/bin/python3.12 /usr/bin/python3 && \
-    ln -sf /usr/local/bin/python3.12 /usr/bin/python && \
-    rm -f /usr/bin/python3.9 /usr/local/bin/python3.9
-
+# Set Python 3.12.9 as the default for `python3` and `python`
+RUN alternatives --install /usr/bin/python3 python3 /usr/local/bin/python3.12 1 && \
+    alternatives --install /usr/bin/python python /usr/local/bin/python3.12 1
