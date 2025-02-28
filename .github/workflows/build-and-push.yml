@@ -48,7 +48,7 @@ jobs:
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
-          for dir in amazoncorretto17-al2023 ubuntu24; do
+          for dir in ubi9_corretto17 ubuntu24; do
             echo "Building and pushing $dir..."
             docker build -t $DOCKERHUB_USERNAME/$dir:latest -f $dir/Dockerfile $dir/
             docker push $DOCKERHUB_USERNAME/$dir:latest
