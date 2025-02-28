@@ -1,8 +1,16 @@
-# Use the latest Ubuntu 24 base image
-FROM ubuntu:24.04
+# Use the latest Red Hat UBI 9 image
+FROM registry.access.redhat.com/ubi9/ubi:latest
 
-# Update and apply the latest security patches
-RUN apt-get update -y && \
-    apt-get upgrade -y && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+# Set environment variables (adjust as needed)
+ENV JAVA_HOME=/usr/lib/jvm/java-17-amazon-corretto \
+    PATH=$JAVA_HOME/bin:$PATH
+
+# Update all system packages, fix known vulnerabilities, and install dependencies
+RUN dnf update -y \
+    && dnf install -y dnf-utils curl \
+    && dnf upgrade -y glibc gnutls vim \
+    && curl -o /tmp/corretto-17.rpm https://corretto.aws/downloads/latest/amazon-corretto-17-x64-linux-jdk.rpm \
+    && dnf install -y /tmp/corretto-17.rpm \
+    && rm -f /tmp/corretto-17.rpm \
+    && dnf clean all
+
