@@ -5,8 +5,10 @@ FROM registry.access.redhat.com/ubi9/ubi:latest
 ENV JAVA_HOME=/usr/lib/jvm/java-17-amazon-corretto
 ENV PATH="$JAVA_HOME/bin:$PATH"
 
-# Install dependencies and Corretto 17
-RUN dnf install -y dnf-utils \
-    && dnf config-manager --add-repo https://corretto.aws/downloads/latest/amazon-corretto-17-x64-linux-jdk.rpm \
-    && dnf install -y amazon-corretto-17 \
+# Install dependencies and Amazon Corretto 17
+RUN dnf install -y dnf-utils curl \
+    && curl -o /tmp/corretto-17.rpm https://corretto.aws/downloads/latest/amazon-corretto-17-x64-linux-jdk.rpm \
+    && dnf install -y /tmp/corretto-17.rpm \
+    && rm -f /tmp/corretto-17.rpm \
     && dnf clean all
+    
