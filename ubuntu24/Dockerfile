@@ -10,7 +10,8 @@ RUN dnf update -y \
     && dnf install -y dnf-utils \
     && dnf swap -y curl-minimal curl \
     && dnf -y update libxml2 --releasever=2023.6.20250218 \
-    && curl -o /tmp/corretto-17.rpm https://corretto.aws/downloads/latest/amazon-corretto-17-x64-linux-jdk.rpm \
+    && curl -fL -o /tmp/corretto-17.rpm https://corretto.aws/downloads/latest/amazon-corretto-17-x64-linux-jdk.rpm \
+    && test -s /tmp/corretto-17.rpm || (echo "Download failed!" && exit 1) \
     && dnf install -y /tmp/corretto-17.rpm \
     && rm -f /tmp/corretto-17.rpm \
     && dnf clean all
