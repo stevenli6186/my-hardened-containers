@@ -1,17 +1,22 @@
-# Use the latest Red Hat UBI 9 image
-FROM registry.access.redhat.com/ubi9/ubi:latest
+# Use Fedora 41 as the base image
+FROM fedora:41
 
-# Set environment variables (adjust as needed)
-ENV JAVA_HOME=/usr/lib/jvm/java-17-amazon-corretto \
-    PATH=$JAVA_HOME/bin:$PATH
+# Set the release version for Fedora 41 to ensure latest package updates
+ENV FEDORA_RELEASE=41
 
-# Update system, fix vulnerabilities, and install dependencies
-RUN dnf update -y \
-    && dnf install -y dnf-utils \
-    && dnf swap -y curl-minimal curl \
-    && dnf -y update libxml2 --releasever=2023.6.20250218 \
-    && curl -fL -o /tmp/corretto-17.rpm https://corretto.aws/downloads/latest/amazon-corretto-17-x64-linux-jdk.rpm \
-    && test -s /tmp/corretto-17.rpm || (echo "Download failed!" && exit 1) \
-    && dnf install -y /tmp/corretto-17.rpm \
-    && rm -f /tmp/corretto-17.rpm \
-    && dnf clean all
+# Update the system and install necessary tools
+RUN dnf -y update --refresh && \
+    dnf -y install dnf-plugins-core curl && \
+    dnf clean all
+
+# Install Amazon Corretto 17
+RUN curl -fL -o /tmp/corretto-17.rpm https://corretto.aws/downloads/latest/amazon-corretto-17-x64-linux-jdk.rpm && \
+    dnf install -y /tmp/corretto-17.rpm && \
+    rm -f /tmp/corretto-17.rpm && \
+    dnf clean all
+
+# Verify all installed packages are up-to-date
+RUN dnf -y upgrade --refresh && dnf clean all
+
+# Verify installation
+RUN java -version && python --version && dnf --version
