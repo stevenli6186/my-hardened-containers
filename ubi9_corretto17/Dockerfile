@@ -8,7 +8,8 @@ ENV PATH="$JAVA_HOME/bin:$PATH"
 # Swap curl-minimal for curl and install dependencies
 RUN dnf swap -y curl-minimal curl \
     && dnf install -y dnf-utils \
-    && curl -o /tmp/corretto-17.rpm https://corretto.aws/downloads/latest/amazon-corretto-17-x64-linux-jdk.rpm \
+    && curl -fL -o /tmp/corretto-17.rpm https://corretto.aws/downloads/latest/amazon-corretto-17-x64-linux-jdk.rpm \
+    && ls -lh /tmp/ \
     && dnf install -y /tmp/corretto-17.rpm \
     && rm -f /tmp/corretto-17.rpm \
     && dnf clean all
