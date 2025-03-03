@@ -64,7 +64,7 @@ jobs:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DSO_REGISTRY_USERNAME: ${{ secrets.DSO_REGISTRY_USERNAME }}
         run: |
-          for dir in ubi8-jdk17 ubuntu24; do
+          for dir in ubi8-jdk17 ubi9-jdk17 ubuntu24; do
             echo "Building and pushing $dir..."
             
             # Check if Dockerfile references registry1.dso.mil as a base image
