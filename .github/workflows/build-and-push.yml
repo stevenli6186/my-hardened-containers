@@ -36,21 +36,56 @@ jobs:
             echo "DOCKERHUB_TOKEN is available!"
           fi
 
+          if [ -n "${{ secrets.DSO_REGISTRY_USERNAME }}" ] && [ -n "${{ secrets.DSO_REGISTRY_PASSWORD }}" ]; then
+            echo "DSO_REGISTRY credentials are available!"
+          else
+            echo "DSO_REGISTRY credentials are missing! Skipping login for registry1.dso.mil."
+          fi
+
       - name: Log in to Docker Hub
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
           echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin || exit 1
-          echo "Docker login successful!"
+          echo "Docker Hub login successful!"
+
+      - name: Log in to registry1.dso.mil (if required)
+        if: env.DSO_REGISTRY_USERNAME != '' && env.DSO_REGISTRY_PASSWORD != ''
+        env:
+          DSO_REGISTRY_USERNAME: ${{ secrets.DSO_REGISTRY_USERNAME }}
+          DSO_REGISTRY_PASSWORD: ${{ secrets.DSO_REGISTRY_PASSWORD }}
+        run: |
+          echo "$DSO_REGISTRY_PASSWORD" | docker login registry1.dso.mil -u "$DSO_REGISTRY_USERNAME" --password-stdin || exit 1
+          echo "registry1.dso.mil login successful!"
 
       - name: Build and Push Each Container
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DSO_REGISTRY_USERNAME: ${{ secrets.DSO_REGISTRY_USERNAME }}
         run: |
-          for dir in alpine_corretto17 ubuntu24; do
+          for dir in ubi8-jdk17 ubuntu24; do
             echo "Building and pushing $dir..."
+            
+            # Check if Dockerfile references registry1.dso.mil as a base image
+            if grep -q "FROM registry1.dso.mil" "$dir/Dockerfile"; then
+              echo "Base image for $dir comes from registry1.dso.mil. Ensuring login..."
+              docker login registry1.dso.mil -u "$DSO_REGISTRY_USERNAME" -p "$DSO_REGISTRY_PASSWORD" || exit 1
+            fi
+
+            # Build the image
             docker build -t $DOCKERHUB_USERNAME/$dir:latest -f $dir/Dockerfile $dir/
+            docker tag $DOCKERHUB_USERNAME/$dir:latest registry1.dso.mil/$DSO_REGISTRY_USERNAME/$dir:latest
+
+            # Push to Docker Hub
             docker push $DOCKERHUB_USERNAME/$dir:latest
-            echo "$dir image pushed successfully!"
+            echo "$dir image pushed to Docker Hub successfully!"
+
+            # Push to registry1.dso.mil (only if login credentials are available)
+            if [ -n "$DSO_REGISTRY_USERNAME" ] && [ -n "$DSO_REGISTRY_PASSWORD" ]; then
+              docker push registry1.dso.mil/$DSO_REGISTRY_USERNAME/$dir:latest
+              echo "$dir image pushed to registry1.dso.mil successfully!"
+            else
+              echo "Skipping push to registry1.dso.mil for $dir as credentials are missing."
+            fi
           done
